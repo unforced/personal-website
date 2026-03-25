@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aaron Gabriel Neyer — Unforced Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Libre+Baskerville:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil: #1a1208;
+    --bark: #2c1f0e;
+    --moss: #2d3b22;
+    --lichen: #4a5e38;
+    --mycelium: #c9b99a;
+    --spore: #e8dcc8;
+    --cream: #f5efe4;
+    --electric: #7fffb0;
+    --electric-dim: rgba(127,255,176,0.15);
+    --glow: rgba(127,255,176,0.05);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--soil);
+    color: var(--spore);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-size: 18px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NETWORK CANVAS ── */
+  #network {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(26,18,8,0.9), transparent);
+  }
+
+  .nav-mark {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    color: var(--electric);
+    text-transform: uppercase;
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2.5rem;
+  }
+
+  nav a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mycelium);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  nav a:hover { color: var(--electric); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 2.5rem 4rem;
+    position: relative;
+  }
+
+  .hero-inner {
+    max-width: 780px;
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    color: var(--electric);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-label::before {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: var(--electric);
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 9vw, 7.5rem);
+    font-weight: 300;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+    margin-bottom: 0.15em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--mycelium);
+  }
+
+  .hero-sub {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    font-style: italic;
+    color: var(--mycelium);
+    margin: 1.5rem 0 2.5rem;
+    max-width: 560px;
+    line-height: 1.5;
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 3rem;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lichen);
+    border: 1px solid var(--lichen);
+    padding: 0.35rem 0.85rem;
+    border-radius: 2px;
+    transition: all 0.3s;
+  }
+
+  .tag:hover {
+    color: var(--electric);
+    border-color: var(--electric);
+    background: var(--electric-dim);
+  }
+
+  .scroll-cue {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--lichen);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .scroll-cue::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--lichen), transparent);
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ── SECTION SHARED ── */
+  section {
+    padding: 7rem 2.5rem;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.25em;
+    color: var(--electric);
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--electric-dim), transparent);
+    max-width: 200px;
+  }
+
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-weight: 300;
+    color: var(--cream);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 em { font-style: italic; color: var(--mycelium); }
+
+  /* ── ABOUT ── */
+  #about {
+    background: linear-gradient(to bottom, transparent, rgba(44,31,14,0.4), transparent);
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .about-text p {
+    color: var(--mycelium);
+    margin-bottom: 1.2em;
+    font-size: 1.1rem;
+  }
+
+  .about-text p strong {
+    color: var(--spore);
+    font-weight: 400;
+  }
+
+  .about-sidebar {
+    padding-top: 1rem;
+  }
+
+  .sidebar-block {
+    border-left: 1px solid var(--lichen);
+    padding-left: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .sidebar-block h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--electric);
+    margin-bottom: 0.75rem;
+  }
+
+  .sidebar-block p {
+    font-size: 0.95rem;
+    color: var(--mycelium);
+    line-height: 1.6;
+  }
+
+  /* ── PROJECTS ── */
+  #projects {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5px;
+    margin-top: 1rem;
+    background: var(--lichen);
+    border: 1.5px solid var(--lichen);
+  }
+
+  .project-card {
+    background: var(--soil);
+    padding: 2.5rem;
+    transition: background 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, var(--electric), transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .project-card:hover { background: var(--bark); }
+  .project-card:hover::before { transform: scaleX(1); }
+
+  .project-card.featured {
+    grid-column: span 2;
+    background: var(--bark);
+  }
+
+  .project-card.featured::before { transform: scaleX(1); }
+
+  .project-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    color: var(--lichen);
+    margin-bottom: 1.5rem;
+  }
+
+  .project-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.7rem;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  .project-card h3 em {
+    font-style: italic;
+    color: var(--mycelium);
+  }
+
+  .project-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--electric);
+    margin-bottom: 1.2rem;
+  }
+
+  .project-desc {
+    font-size: 0.95rem;
+    color: var(--mycelium);
+    line-height: 1.65;
+  }
+
+  .project-card.featured .project-desc {
+    font-size: 1.1rem;
+  }
+
+  /* ── PHILOSOPHY ── */
+  #philosophy {
+    text-align: center;
+    padding: 8rem 2.5rem;
+  }
+
+  .philosophy-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 4vw, 3rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--mycelium);
+    max-width: 820px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.35;
+  }
+
+  .philosophy-quote strong {
+    color: var(--cream);
+    font-style: normal;
+    font-weight: 300;
+  }
+
+  .philosophy-attr {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--electric);
+    text-transform: uppercase;
+  }
+
+  .threads {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 4rem;
+  }
+
+  .thread {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--spore);
+    background: rgba(127,255,176,0.06);
+    border: 1px solid rgba(127,255,176,0.2);
+    padding: 0.6rem 1.2rem;
+    border-radius: 2px;
+  }
+
+  /* ── COMMUNITY ── */
+  #community {
+    background: linear-gradient(to bottom, transparent, rgba(44,31,14,0.5), transparent);
+  }
+
+  .community-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+
+  .community-item {
+    border-top: 1px solid var(--lichen);
+    padding-top: 1.5rem;
+  }
+
+  .community-item h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 0.4rem;
+  }
+
+  .community-role {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--electric);
+    margin-bottom: 0.8rem;
+  }
+
+  .community-item p {
+    font-size: 0.92rem;
+    color: var(--mycelium);
+    line-height: 1.6;
+  }
+
+  /* ── CONTACT / FOOTER ── */
+  #contact {
+    padding: 7rem 2.5rem 3rem;
+    text-align: center;
+  }
+
+  .contact-inner {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .contact-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .contact-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mycelium);
+    text-decoration: none;
+    border-bottom: 1px solid var(--lichen);
+    padding-bottom: 2px;
+    transition: all 0.3s;
+  }
+
+  .contact-link:hover {
+    color: var(--electric);
+    border-color: var(--electric);
+  }
+
+  footer {
+    padding: 2rem 2.5rem;
+    text-align: center;
+    border-top: 1px solid rgba(74,94,56,0.3);
+    margin-top: 4rem;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    color: var(--lichen);
+    text-transform: uppercase;
+  }
+
+  /* ── REVEAL ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.9s cubic-bezier(0.19, 1, 0.22, 1),
+                transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .about-grid, .community-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .project-card.featured { grid-column: span 1; }
+    nav ul { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="network"></canvas>
+
+<nav>
+  <div class="nav-mark">UnforcedAG</div>
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#community">Community</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Boulder, Colorado — ATLAS MFA Candidate</div>
+    <h1>Aaron<br><em>Gabriel</em><br>Neyer</h1>
+    <p class="hero-sub">Creative technologist, community weaver, and builder at the intersection of contemplative practice and emergent technology.</p>
+    <div class="hero-tags">
+      <span class="tag">Voice-First AI</span>
+      <span class="tag">Knowledge Graphs</span>
+      <span class="tag">Civic Tech</span>
+      <span class="tag">Regenerative Systems</span>
+      <span class="tag">Extended Mind</span>
+      <span class="tag">Taiji</span>
+      <span class="tag">Harmonium</span>
+      <span class="tag">Former Google</span>
+    </div>
+    <div class="scroll-cue">Scroll to explore</div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="wrap">
+    <div class="section-label">Who I Am</div>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <h2>Engineer turned <em>weaver</em></h2>
+        <p>I left Google to build something harder — community infrastructure for a world that needs it. That path led through a Boulder City Council race, a 501(c)(3) nonprofit, a cooperative co-working space, and now a graduate program in Creative Technology & Design at CU Boulder's ATLAS Institute.</p>
+        <p>My work lives at a strange and fertile edge: <strong>where mycorrhizal thinking meets distributed systems, where taiji philosophy informs product design, where contemplative practice shapes how we build AI.</strong></p>
+        <p>I'm building Parachute.Computer — a voice-first personal knowledge management tool with a living knowledge graph I call Parachute Brain. It's an extension of self in the sense that Andy Clark and David Chalmers meant: <em>the mind reaching beyond the skull</em>.</p>
+        <p>My personal AI agent is named UnforcedAGI — Aaron Gabriel's Intelligence — a reflection of my belief that the most powerful AI is deeply personal, contextual, and grown alongside us rather than imposed upon us.</p>
+      </div>
+      <div class="about-sidebar reveal">
+        <div class="sidebar-block">
+          <h4>Current Roles</h4>
+          <p>Chair, Boulder Human Relations Commission<br>
+          Graduate Student, CU ATLAS MFA<br>
+          Co-founder, Open Parachute PBC<br>
+          Founder, Unforced Development LLC</p>
+        </div>
+        <div class="sidebar-block">
+          <h4>Practices</h4>
+          <p>Taiji (Yang style) as philosophy & movement<br>
+          Harmonium for kirtan<br>
+          Contemplative study with Sandhiji<br>
+          Mycorrhizal network thinking</p>
+        </div>
+        <div class="sidebar-block">
+          <h4>Publishing</h4>
+          <p>Substack & X under the <em>unforced</em> brand — exploring balanced technology, building in the margins, and AI at the edge of consciousness.</p>
+        </div>
+        <div class="sidebar-block">
+          <h4>Education</h4>
+          <p>CU Boulder — ATLAS Creative Technology & Design (graduate)<br>
+          Google — Engineering (former)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="wrap">
+    <div class="section-label">Active Work</div>
+    <div class="projects-grid reveal">
+      <div class="project-card featured">
+        <div class="project-num">01 — Featured</div>
+        <h3>Parachute<em>.Computer</em></h3>
+        <div class="project-type">Voice-First Knowledge Management · Open Parachute PBC</div>
+        <p class="project-desc">A voice-first personal knowledge management tool built around Parachute Brain — a living knowledge graph that grows with you. Built on NVIDIA's Parakeet ASR, Nemotron reasoning models, and a conversational ontology discovery approach. The vision: shared ownership of digital knowledge infrastructure as a public benefit.</p>
+      </div>
+
+      <div class="project-card">
+        <div class="project-num">02</div>
+        <h3>The Coordination <em>Games</em></h3>
+        <div class="project-type">AI Agent Olympiad · dacc.fund · May 2026</div>
+        <p class="project-desc">An AI Agent Coordination Olympiad launching May 2026 — three playable arenas (Crab Bucket, Commons Pool, Prisoner's Dilemma) exploring how agents and humans solve collective action problems. Co-created with Kevin Owocki, Mathilda, and Julia.</p>
+      </div>
+
+      <div class="project-card">
+        <div class="project-num">03</div>
+        <h3>Woven <em>Web</em></h3>
+        <div class="project-type">501(c)(3) Nonprofit · Community Weaving</div>
+        <p class="project-desc">A nonprofit producing COhere Boulder — a 70+ event, donation-based community gathering series running 10 days at a time. Built on the metaphor of mycorrhizal networks: invisible threads of connection sustaining an ecosystem.</p>
+      </div>
+
+      <div class="project-card">
+        <div class="project-num">04</div>
+        <h3>Regen <em>Hub</em></h3>
+        <div class="project-type">Cooperative Space · Boulder, CO</div>
+        <p class="project-desc">A cooperative co-working and collaboration space at the intersection of AI and social/ecological impact — where regenerative practitioners and technologists share tools, ideas, and infrastructure.</p>
+      </div>
+
+      <div class="project-card">
+        <div class="project-num">05</div>
+        <h3>NatalEngine</h3>
+        <div class="project-type">Open Source · JS Library</div>
+        <p class="project-desc">An open-source JavaScript library for Western Astrology, Human Design, and Gene Keys calculations. Built in a weekend. Published under the "Building in the Margins" Substack series.</p>
+      </div>
+
+      <div class="project-card">
+        <div class="project-num">06</div>
+        <h3><em>DeFlock</em> Boulder</h3>
+        <div class="project-type">Civic Campaign · 2025–2026</div>
+        <p class="project-desc">Led the campaign opposing renewal of Boulder's Flock Safety automated license plate reader contract — coordinating coalition building, HRC letters, Council resolutions, and city manager briefings. Unanimous HRC vote achieved, March 2026.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section id="philosophy">
+  <div class="wrap">
+    <p class="philosophy-quote reveal">
+      "The mind reaches <strong>beyond the skull</strong> — into tools, into relationships, into the living network of connection that is community itself."
+    </p>
+    <div class="philosophy-attr reveal">Extended Mind Theory · Taiji · Unforced Development</div>
+    <div class="threads reveal">
+      <span class="thread">Mycorrhizal Thinking</span>
+      <span class="thread">Extended Mind Theory</span>
+      <span class="thread">Contemplative Tech</span>
+      <span class="thread">Regenerative Systems</span>
+      <span class="thread">AI Consciousness</span>
+      <span class="thread">Community as Infrastructure</span>
+      <span class="thread">Ecological Restoration</span>
+      <span class="thread">Voice as Interface</span>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="community">
+  <div class="wrap">
+    <div class="section-label">Civic & Community</div>
+    <h2 class="reveal">Rooted in <em>Boulder</em></h2>
+    <div class="community-grid">
+      <div class="community-item reveal">
+        <h3>Human Relations Commission</h3>
+        <div class="community-role">Chair · City of Boulder</div>
+        <p>Appointed to and elected chair of Boulder's Human Relations Commission, working at the intersection of equity, civil rights, and local governance. Led the commission's unanimous vote on a formal letter regarding the DeFlock campaign.</p>
+      </div>
+      <div class="community-item reveal">
+        <h3>COhere Boulder</h3>
+        <div class="community-role">Founder & Producer · Woven Web</div>
+        <p>A 10-day community gathering series with 70+ events — donation-based and radically inclusive. Building the social mycelium of Boulder's regenerative ecosystem through music, practice, and genuine encounter.</p>
+      </div>
+      <div class="community-item reveal">
+        <h3>Learn Vibe Build</h3>
+        <div class="community-role">Co-creator · with Kevin Owocki</div>
+        <p>A 4-week cohort program teaching AI-assisted building with emphasis on discernment and creative practice. Building alongside rather than being replaced by AI.</p>
+      </div>
+      <div class="community-item reveal">
+        <h3>Boulder City Council</h3>
+        <div class="community-role">Candidate · 2023</div>
+        <p>Ran for Boulder City Council in 2023, choosing community-centered engagement over career optimization — consistent with a long-term pattern of building civic infrastructure from the inside.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="section-label" style="justify-content:center">Get in Touch</div>
+    <h2 class="reveal">Let's <em>weave</em> something</h2>
+    <p class="reveal" style="color:var(--mycelium); margin-top:1rem; font-size:1.05rem;">I'm always interested in conversations at the edges — civic tech, AI consciousness, community infrastructure, contemplative practice and technology design.</p>
+    <div class="contact-links reveal">
+      <a href="https://x.com/UnforcedAG" class="contact-link" target="_blank">X / Twitter</a>
+      <a href="https://substack.com/@unforced" class="contact-link" target="_blank">Substack</a>
+      <a href="https://parachute.computer" class="contact-link" target="_blank">Parachute.Computer</a>
+      <a href="https://github.com/unforcedAG" class="contact-link" target="_blank">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Aaron Gabriel Neyer · Unforced Development LLC · Boulder, Colorado</p>
+</footer>
+
+<script>
+// ── MYCORRHIZAL NETWORK ANIMATION ──
+const canvas = document.getElementById('network');
+const ctx = canvas.getContext('2d');
+
+let nodes = [], W, H;
+const NODE_COUNT = 55;
+const MAX_DIST = 180;
+const ELECTRIC = 'rgba(127,255,176,';
+const MYCELIUM = 'rgba(201,185,154,';
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+
+function initNodes() {
+  nodes = [];
+  for (let i = 0; i < NODE_COUNT; i++) {
+    nodes.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      r: Math.random() * 2 + 0.5,
+      pulse: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Update
+  nodes.forEach(n => {
+    n.x += n.vx;
+    n.y += n.vy;
+    n.pulse += 0.012;
+    if (n.x < 0 || n.x > W) n.vx *= -1;
+    if (n.y < 0 || n.y > H) n.vy *= -1;
+  });
+
+  // Connections
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[j].x - nodes[i].x;
+      const dy = nodes[j].y - nodes[i].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < MAX_DIST) {
+        const alpha = (1 - dist / MAX_DIST) * 0.55;
+        const isElectric = dist < MAX_DIST * 0.4;
+        ctx.beginPath();
+        ctx.strokeStyle = isElectric
+          ? ELECTRIC + alpha + ')'
+          : MYCELIUM + (alpha * 0.6) + ')';
+        ctx.lineWidth = isElectric ? 0.8 : 0.4;
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Nodes
+  nodes.forEach(n => {
+    const glow = Math.sin(n.pulse) * 0.3 + 0.7;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r * glow, 0, Math.PI * 2);
+    ctx.fillStyle = ELECTRIC + (glow * 0.8) + ')';
+    ctx.fill();
+  });
+
+  requestAnimationFrame(draw);
+}
+
+resize();
+initNodes();
+draw();
+window.addEventListener('resize', () => { resize(); initNodes(); });
+
+// ── SCROLL REVEAL ──
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+reveals.forEach(el => observer.observe(el));
+
+// Hero elements reveal on load
+setTimeout(() => {
+  document.querySelectorAll('#hero *').forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 1s ease, transform 1s ease';
+    setTimeout(() => {
+      el.style.opacity = '';
+      el.style.transform = '';
+    }, 300 + i * 120);
+  });
+}, 100);
+</script>
+</body>
+</html>
